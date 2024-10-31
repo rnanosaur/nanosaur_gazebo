@@ -1,0 +1,46 @@
+<?xml version="1.0" ?>
+<robot name="nanosaur_sensor_realsense" xmlns:xacro="http://ros.org/wiki/xacro">
+
+    <xacro:macro name="realsense_camera" params="parent_name sensor_name robot_name publish_pointcloud">
+
+        <xacro:property name="update_rate" value="30.0" />
+        <xacro:property name="resolution_width" value="640" />
+        <xacro:property name="resolution_heigth" value="480" />
+        <xacro:property name="fov" value="1.57" />
+        <xacro:property name="baseline" value="0.05" />
+
+        <isaacsim reference="camera_infra1_frame">
+            <sensor type="camera" name="${sensor_name}_infra1">
+                <always_on>true</always_on>
+                <ignition_frame_id>camera_infra1_optical_frame</ignition_frame_id>
+                <visualize>true</visualize>
+                <update_rate>${update_rate}</update_rate>
+                <topic>infra1/camera_raw</topic>
+                <topic_camera_info>infra1/camera_info</topic_camera_info>
+                <camera name="infra1">
+                    <horizontal_fov>${fov}</horizontal_fov>
+                    <pose>0 0 0 0 0 0</pose>
+                    <image>
+                        <width>${resolution_width}</width>
+                        <height>${resolution_heigth}</height>
+                        <format>R8G8B8</format>
+                    </image>
+                    <clip>
+                        <near>0.02</near>
+                        <far>300</far>
+                    </clip>
+                    <noise>
+                        <type>gaussian</type>
+                        <!-- Noise is sampled independently per pixel on each frame.
+                             That pixel's noise value is added to each of its color
+                             channels, which at that point lie in the range [0,1]. -->
+                        <mean>0.0</mean>
+                        <stddev>0.007</stddev>
+                    </noise>
+                </camera>
+            </sensor>
+        </isaacsim>
+
+    </xacro:macro>
+
+</robot>

@@ -32,20 +32,22 @@ from launch.actions import ExecuteProcess, DeclareLaunchArgument, OpaqueFunction
 
 
 def launch_setup(context: LaunchContext, support_isaac_sim_folder):
-    package_isaac_sim = get_package_share_directory('nanosaur_isaac_sim')
+    package_isaac_sim = get_package_share_directory('isaac_sim_wrapper')
     # render namespace, dumping the support_package.
     isaac_sim_folder = context.perform_substitution(support_isaac_sim_folder)
     isaac_sim_version = isaac_sim_folder.split('-')[-1]
     # Get the user's home directory
     user_home_dir = os.path.expanduser("~")
     isaac_sim_path = f"{user_home_dir}/.local/share/ov/pkg/{isaac_sim_folder}"
+    # Config path
+    package_isaac_sim_config = os.path.join(package_isaac_sim, "config", 'isaac_sim.yaml')
 
     print(f"Run Isaac Sim {isaac_sim_version} from {isaac_sim_path}")
     # Path Launcher Isaac Sim
-    isaac_sim_nanosaur_launcher = os.path.join(package_isaac_sim, "scripts", "nanosaur_isaac_sim_sa.py")
+    isaac_sim_wrapper_launcher = os.path.join(package_isaac_sim, "scripts", "isaac_sim_robot_launcher.py")
     # Start Isaac Sim from python script
     isaac_sim = ExecuteProcess(
-            cmd=[f"{isaac_sim_path}/python.sh", isaac_sim_nanosaur_launcher],
+            cmd=[f"{isaac_sim_path}/python.sh", isaac_sim_wrapper_launcher, package_isaac_sim_config],
             name='IsaacSim',
             output='screen',
             shell=True

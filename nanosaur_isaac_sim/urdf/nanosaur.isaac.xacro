@@ -3,16 +3,29 @@
 
     <!-- nanosaur parts -->
     <xacro:include filename="$(find nanosaur_description)/urdf/robot.urdf.xacro" />
+    <!-- Sensors -->
+    <xacro:include filename="$(find nanosaur_isaac_sim)/urdf/sensors/realsense.isaac.xacro" />
 
     <xacro:arg name="robot_name" default="nanosaur" />
     <!-- camera definitions -->
     <xacro:arg name="head_type" default="empty" /> <!--options: empty, realsense, zedmini -->
     <xacro:arg name="flap_type" default="empty" /> <!--options: empty, LD06 -->
-    <xacro:property name="cover_type_name" value="$(arg cover_type)" />
+    <xacro:property name="cover_type_name" value="$(arg head_type)" />
+
+    <xacro:arg name="publish_pointcloud"  default="false"/>
 
     <xacro:nanosaur
             head_type="$(arg head_type)"
             flap_type="$(arg flap_type)"
             use_nominal_extrinsics="true" />
+
+    <!-- Nanosaur sensors -->
+    <xacro:if value="${cover_type_name == 'realsense'}">
+        <xacro:realsense_camera
+                parent_name="camera_board"
+                sensor_name="camera"
+                robot_name="$(arg robot_name)"
+                publish_pointcloud="$(arg publish_pointcloud)" />
+    </xacro:if>
 
 </robot>

@@ -55,9 +55,9 @@ def build_mecanum_controller_graph(robot_name, base_link_name="nanosaur_base"):
 
     wheel_orientations = np.array([
         [0.7071068, 0, 0, 0.7071068],
-        [0.7071068, 0, 0, -0.7071068],
         [0.7071068, 0, 0, 0.7071068],
-        [0.7071068, 0, 0, -0.7071068],
+        [0.7071068, 0, 0, 0.7071068],
+        [0.7071068, 0, 0, 0.7071068],
     ])
     mecanum_angles = np.array([
         -45.0,

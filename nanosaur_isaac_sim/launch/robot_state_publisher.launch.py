@@ -106,9 +106,12 @@ def generate_launch_description():
 
     # This service node wait the service start up from the Isaac Sim and exit 
     isaac_sim_manager = Node(
-        package='nanosaur_isaac_sim',
+        package='isaac_sim_wrapper',
         namespace=namespace,
         executable='isaac_sim_manager',
+        parameters=[
+            {'robot_description': 'nanosaur/robot_description'}
+        ]
     )
     
     # Dynamic robot_state_publisher

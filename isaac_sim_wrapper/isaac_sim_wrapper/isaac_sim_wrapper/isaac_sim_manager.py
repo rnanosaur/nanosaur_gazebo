@@ -24,7 +24,7 @@
 # EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 # https://docs.ros.org/en/noetic/api/std_srvs/html/srv/Empty.html
-from std_srvs.srv import Empty
+from isaac_sim_wrapper_msgs.srv import RobotSpawner
 
 import rclpy
 from rclpy.node import Node
@@ -33,15 +33,19 @@ class IsaacSimMananger(Node):
 
     def __init__(self):
         super().__init__('isaac_sim_manager')
-        self.cli = self.create_client(Empty, '/isaac_sim_status')
+        self.cli = self.create_client(RobotSpawner, '/isaac_sim_status')
         # Get interval parameter, default 5.0
         self.declare_parameter('timeout_sec', 5.0)
         timeout_sec = self.get_parameter('timeout_sec')._value
         self.get_logger().info(f"Isaac Sim manager started, check every {timeout_sec}s")
+        self.declare_parameter('robot_description', 'robot_description')
+        robot_description = self.get_parameter('robot_description')._value
+        self.get_logger().info(f"Topic robot description: {robot_description}")
         # Wait until Isaac Sim service starter
         while not self.cli.wait_for_service(timeout_sec=timeout_sec):
             self.get_logger().info("Isaac Sim not yet started, waiting again...")
-        self.req = Empty.Request()
+        self.req = RobotSpawner.Request()
+        self.req.robot_description = robot_description
     
     def send_request(self):
         return self.cli.call_async(self.req)

@@ -53,6 +53,7 @@ def create_camera(robot_name, number_camera, camera_frame, camera_stage_path, ca
                 (f"{camera_name}_setCamera", "omni.isaac.core_nodes.IsaacSetCameraOnRenderProduct"),
                 (f"{camera_name}_cameraHelper", "omni.isaac.ros2_bridge.ROS2CameraHelper"),
                 (f"{camera_name}_cameraHelperInfo", "omni.isaac.ros2_bridge.ROS2CameraHelper"),
+                #(f"{camera_name}_cameraHelperInfo", "omni.isaac.ros2_bridge.ROS2CameraInfoHelper"),
             ],
             keys.CONNECT: [
                 (f"{camera_name}_OnTick.outputs:tick", f"{camera_name}_createViewport.inputs:execIn"),

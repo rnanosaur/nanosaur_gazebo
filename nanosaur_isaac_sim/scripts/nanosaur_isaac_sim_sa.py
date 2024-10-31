@@ -28,6 +28,7 @@ import sys
 import carb
 from omni.isaac.kit import SimulationApp
 
+
 CONFIG = {"renderer": "RayTracedLighting", "headless": False}
 NANOSAUR_WS="nanosaur_ws"
 NANOSAUR_DESCRIPTION_NAME="nanosaur_description"
@@ -91,6 +92,7 @@ from std_srvs.srv import Empty
 from std_msgs.msg import String
 from rclpy.node import Node
 import rclpy
+import xml.etree.ElementTree as ET
 
 PATH_LOCAL_URDF_FOLDER="/tmp/robot.urdf"
 
@@ -190,10 +192,10 @@ class RobotLoader(Node):
         # Build camera graph
         build_realsense_camera_graph(robot_name)
         # Build Joint State publisher
-        #links = ["front_left_mecanum_link", "front_right_mecanum_link", "rear_left_mecanum_link", "rear_right_mecanum_link"]
-        #publish_joint_state_graph(robot_name, links)
+        links = ["front_left_mecanum_link", "front_right_mecanum_link", "rear_left_mecanum_link", "rear_right_mecanum_link"]
+        publish_joint_state_graph(robot_name, links)
         # Build mecanum controller
-        #build_mecanum_controller_graph(robot_name)
+        build_mecanum_controller_graph(robot_name)
         
         # Change stiffness and damping
         nanosaur_stage_path="/nanosaur/nanosaur_base"
@@ -220,6 +222,22 @@ class RobotLoader(Node):
         text_file = open(PATH_LOCAL_URDF_FOLDER, "w")
         n = text_file.write(robot_urdf)
         text_file.close()
+        
+        #self.get_logger().info(robot_urdf)
+        # Parse the XML content
+        root = ET.fromstring(robot_urdf)
+
+        # Find all <robot> elements
+        robot_sections = root.findall("isaacsim")
+        self.get_logger().info("--------------------------------------------------")
+        #self.get_logger().info(robot_sections)
+        #self.get_logger().info("--------------------------------------------------")
+        # Print each <robot> section
+        for index, robot in enumerate(robot_sections, start=1):
+            self.get_logger().info(f"Isaac Sim Section {index}:")
+            self.get_logger().info(ET.tostring(robot, encoding="unicode", method="xml"))
+            self.get_logger().info("-" * 40)
+        self.get_logger().info("--------------------------------------------------")
         # Load robot
         self.load_robot(robot_name)
 

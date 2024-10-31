@@ -26,27 +26,28 @@ EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-   <name>nanosaur_isaac_sim</name>
-   <version>2.0.0</version>
-   <description>Run nanosaur on NVIDIA Isaac Sim</description>
+    <name>isaac_sim_wrapper_msgs</name>
+    <version>1.0.0</version>
+    <description>Wrap NVIDIA Isaac Sim messages</description>
 
-   <author email="raffaello@rnext.it">Raffaello Bonghi</author>
-   <maintainer email="raffaello@rnext.it">Raffaello Bonghi</maintainer>
-   <license>MIT</license>
+    <author email="raffaello@rnext.it">Raffaello Bonghi</author>
+    <maintainer email="raffaello@rnext.it">Raffaello Bonghi</maintainer>
+    <license>MIT</license>
 
-   <url type="website">https://nanosaur.ai/</url>
-   <url type="repository">https://github.com/rnanosaur/nanosaur_simulations</url>
-   <url type="bugtracker">https://github.com/rnanosaur/nanosaur_simulations/issues</url>
+    <url type="website">https://nanosaur.ai/</url>
+    <url type="repository">https://github.com/rnanosaur/nanosaur_simulations</url>
+    <url type="bugtracker">https://github.com/rnanosaur/nanosaur_simulations/issues</url>
 
-   <buildtool_depend>ament_cmake</buildtool_depend>
+    <buildtool_depend>ament_cmake</buildtool_depend>
 
-   <exec_depend>xacro</exec_depend>
+    <build_depend>rosidl_default_generators</build_depend>
+    <exec_depend>rosidl_default_runtime</exec_depend>
+    <member_of_group>rosidl_interface_packages</member_of_group>
 
-   <exec_depend>robot_state_publisher</exec_depend>
-   <exec_depend>nanosaur_description</exec_depend>
-   <exec_depend>nanosaur_control</exec_depend>
+    <test_depend>ament_lint_auto</test_depend>
+    <test_depend>ament_lint_common</test_depend>
 
-   <export>
-      <build_type>ament_cmake</build_type>
-   </export>
+    <export>
+        <build_type>ament_cmake</build_type>
+    </export>
 </package>

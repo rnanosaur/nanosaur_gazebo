@@ -1,0 +1,6 @@
+
+
+isaac_sim:
+  renderer: "RayTracedLighting"
+  headless: False
+

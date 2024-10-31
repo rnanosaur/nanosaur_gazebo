@@ -28,7 +28,7 @@ from setuptools import find_packages, setup
 from os import path
 from glob import glob
 
-package_name = 'nanosaur_isaac_sim'
+package_name = 'isaac_sim_wrapper'
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
@@ -36,7 +36,7 @@ with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
 
 setup(
     name=package_name,
-    version='2.0.0',
+    version='1.0.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',
@@ -44,20 +44,18 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name, ['requirements.txt']),
         (path.join('share', package_name, 'launch'), glob('launch/*.py')),
-        (path.join('share', package_name, 'scripts'), glob('scripts/*.sh')),
         (path.join('share', package_name, 'scripts'), glob('scripts/*.py')),
-        (path.join('share', package_name, 'urdf'), glob('urdf/*.xacro')),
     ],
     install_requires=requirements,
     zip_safe=True,
     maintainer='Raffaello Bonghi',
     maintainer_email='raffaello@rnext.it',
-    description='Run nanosaur on NVIDIA Isaac Sim',
+    description='Wrap NVIDIA Isaac Sim',
     license='MIT',
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'isaac_sim_manager = nanosaur_isaac_sim.isaac_sim_manager:main',
+            'isaac_sim_manager = isaac_sim_wrapper.isaac_sim_manager:main',
         ],
     },
 )

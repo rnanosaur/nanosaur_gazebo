@@ -34,11 +34,12 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 
 def generate_launch_description():
-    package_isaac_sim = get_package_share_directory('nanosaur_isaac_sim')
+    package_nanosaur_isaac_sim = get_package_share_directory('nanosaur_isaac_sim')
+    package_isaac_sim = get_package_share_directory('isaac_sim_wrapper')
     use_sim_time = LaunchConfiguration('use_sim_time')
     namespace = LaunchConfiguration('namespace')
     
-    launch_file_dir = os.path.join(package_isaac_sim, 'launch')
+    launch_file_dir = os.path.join(package_nanosaur_isaac_sim, 'launch')
 
     use_sim_time_cmd = DeclareLaunchArgument(
         name='use_sim_time',
@@ -52,7 +53,7 @@ def generate_launch_description():
 
     isaac_sim_launcher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [launch_file_dir, '/server_is.launch.py']),
+            [os.path.join(package_isaac_sim, 'launch'), '/isaac_sim_server.launch.py']),
     )
 
     rsp_launcher = IncludeLaunchDescription(
