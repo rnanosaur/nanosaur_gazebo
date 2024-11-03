@@ -125,7 +125,10 @@ class CameraGraph:
         camera_rgb_prim.GetFocalLengthAttr().Set(2.4)
         camera_rgb_prim.GetFocusDistanceAttr().Set(4)
         # Build action graph
-        self._load_og()
+        try:
+            self._load_og()
+        except Exception as e:
+            self._node.get_logger().error(e)
         # Update simulation
         self._simulation_app.update()
         # Set status visibility camera

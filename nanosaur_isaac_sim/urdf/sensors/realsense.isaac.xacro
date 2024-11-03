@@ -61,10 +61,10 @@
                 </camera>
             </sensor>
 
-            <sensor type="camera" name="${sensor_name}_rgb">
+            <sensor type="camera" name="${sensor_name}_color">
                 <name_space>${robot_name}</name_space>
                 <visualize>true</visualize>
-                <camera name="rgb">
+                <camera name="color">
                     <horizontal_fov>${fov}</horizontal_fov>
                     <pose>0 0 0 0 0 0</pose>
                     <image>

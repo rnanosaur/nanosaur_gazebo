@@ -80,7 +80,10 @@ class PluginJointStatePublisher:
 
     def load_joint_state(self):
         # Build action graph
-        self._load_og()
+        try:
+            self._load_og()
+        except Exception as e:
+            self._node.get_logger().error(e)
         # Update simulation
         self._simulation_app.update()
 

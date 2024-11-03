@@ -40,6 +40,7 @@ from ament_index_python.packages import get_package_share_directory
 from std_msgs.msg import String
 from camera_graph import CameraGraph
 from plugin_joint_state_publisher import PluginJointStatePublisher
+from plugin_mecanum_drive import PluginMecanumDrive
 
 
 PACKAGE_RE = re.compile(r'package://([^/]+)/')
@@ -161,6 +162,9 @@ class IsaacRobotSpawner(Node):
                 if plugin_name == "JointStatePublisher":
                     joint_state = PluginJointStatePublisher.from_urdf(self, self._simulation_app, self._robot_name, root, plugin)
                     joint_state.load_joint_state()
+                if plugin_name == "MecanumDrive":
+                    mecanum_drive = PluginMecanumDrive.from_urdf(self, self._simulation_app, self._robot_name, plugin)
+                    mecanum_drive.load_mecanum_drive()
                 else:
                     self.get_logger().info(f"Plugin: {plugin_name}")
         # Remove temporary urdf file
@@ -199,7 +203,10 @@ class IsaacWorld(Node):
             # need to initialize physics getting any articulation..etc
             self._simulation_context.initialize_physics()
         # Build clock graph
-        build_clock_graph()
+        try:
+            build_clock_graph()
+        except Exception as e:
+            self.get_logger().error(e)
         # Wait two frames so that stage starts loading
         simulation_app.update()
         simulation_app.update()
