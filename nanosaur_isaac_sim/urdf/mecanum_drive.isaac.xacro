@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<robot name="mecanum_drive"
+    xmlns:xacro="http://ros.org/wiki/xacro">
+
+
+    <xacro:macro name="mecanum_drive" params="parent wheelbase wheel_radius wheel_separation">
+        <isaacsim>
+            <plugin name="JointStatePublisher">
+                <base_link>${parent}</base_link>
+            </plugin>
+
+            <plugin name="MecanumDrive">
+
+            </plugin>
+        </isaacsim>
+    </xacro:macro>
+
+</robot>

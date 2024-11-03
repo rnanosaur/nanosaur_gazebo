@@ -10,6 +10,7 @@
 
         <isaacsim reference="${sensor_name}">
             <sensor type="camera" name="${sensor_name}_infra1">
+                <name_space>${robot_name}</name_space>
                 <visualize>true</visualize>
                 <camera name="infra1">
                     <horizontal_fov>${fov}</horizontal_fov>
@@ -35,6 +36,7 @@
             </sensor>
 
             <sensor type="camera" name="${sensor_name}_infra2">
+                <name_space>${robot_name}</name_space>
                 <visualize>true</visualize>
                 <camera name="infra2">
                     <horizontal_fov>${fov}</horizontal_fov>
@@ -60,6 +62,7 @@
             </sensor>
 
             <sensor type="camera" name="${sensor_name}_rgb">
+                <name_space>${robot_name}</name_space>
                 <visualize>true</visualize>
                 <camera name="rgb">
                     <horizontal_fov>${fov}</horizontal_fov>

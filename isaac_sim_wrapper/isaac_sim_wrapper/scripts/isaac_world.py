@@ -32,16 +32,40 @@ from omni.isaac.core import World, SimulationContext
 from omni.isaac.core.utils import stage, nucleus
 from omni.isaac.core.utils.stage import is_stage_loading
 from omni.kit import commands
+from omni.graph.core import Controller, GraphPipelineStage
 from rclpy.node import Node
 import xml.etree.ElementTree as ET
 from isaac_sim_wrapper_msgs.srv import RobotSpawner
 from ament_index_python.packages import get_package_share_directory
 from std_msgs.msg import String
 from camera_graph import CameraGraph
+from plugin_joint_state_publisher import PluginJointStatePublisher
 
 
 PACKAGE_RE = re.compile(r'package://([^/]+)/')
 BACKGROUND_STAGE_PATH = "/background"
+
+
+def build_clock_graph():
+    Controller.edit(
+        {
+            "graph_path": f"/Clock",
+            "evaluator_name": "execution",
+            "pipeline_stage": GraphPipelineStage.GRAPH_PIPELINE_STAGE_SIMULATION
+        },
+        {
+            Controller.Keys.CREATE_NODES: [
+                ("OnPlaybackTick", "omni.graph.action.OnPlaybackTick"),
+                ("IsaacReadSimulationTime", "omni.isaac.core_nodes.IsaacReadSimulationTime"),
+                ("ROS2PublishClock", "omni.isaac.ros2_bridge.ROS2PublishClock"),
+            ],
+            Controller.Keys.CONNECT: [
+                ("OnPlaybackTick.outputs:tick", "ROS2PublishClock.inputs:execIn"),
+                ("IsaacReadSimulationTime.outputs:simulationTime", "ROS2PublishClock.inputs:timeStamp"),
+            ]
+        },
+    )
+
 
 class IsaacWorldError(Exception):
 
@@ -120,7 +144,7 @@ class IsaacRobotSpawner(Node):
                 sensor_type = sensor_tag.attrib.get("type", None)
                 # Load sensors
                 if sensor_type == 'camera':
-                    camera = CameraGraph.from_urdf(self, self._simulation_app, camera_counter, self._robot_name, sensor_tag)
+                    camera = CameraGraph.from_urdf(self, self._simulation_app, self._robot_name, camera_counter, sensor_tag)
                     camera.load_camera()
                     # Increase camera counter
                     camera_counter += 1
@@ -129,6 +153,16 @@ class IsaacRobotSpawner(Node):
                     self.get_logger().info("Sensor content:")
                     sensor_content = ET.tostring(sensor_tag, encoding="unicode")
                     self.get_logger().info(sensor_content)
+            # Find all plugins
+            plugins = isaacsim.findall("plugin")
+            for plugin in plugins:
+                plugin_name = plugin.attrib.get("name", None)
+                # Load all plugins
+                if plugin_name == "JointStatePublisher":
+                    joint_state = PluginJointStatePublisher.from_urdf(self, self._simulation_app, self._robot_name, root, plugin)
+                    joint_state.load_joint_state()
+                else:
+                    self.get_logger().info(f"Plugin: {plugin_name}")
         # Remove temporary urdf file
         if os.path.exists(temp_path_local_urdf_file):
             os.remove(temp_path_local_urdf_file)
@@ -164,6 +198,8 @@ class IsaacWorld(Node):
             self._simulation_context.scene.add_default_ground_plane()
             # need to initialize physics getting any articulation..etc
             self._simulation_context.initialize_physics()
+        # Build clock graph
+        build_clock_graph()
         # Wait two frames so that stage starts loading
         simulation_app.update()
         simulation_app.update()

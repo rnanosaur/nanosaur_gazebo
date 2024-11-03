@@ -3,7 +3,8 @@
 
     <!-- nanosaur parts -->
     <xacro:include filename="$(find nanosaur_description)/urdf/robot.urdf.xacro" />
-    <!-- Sensors -->
+    <!-- Sensors & plugins -->
+    <xacro:include filename="$(find nanosaur_isaac_sim)/urdf/mecanum_drive.isaac.xacro" />
     <xacro:include filename="$(find nanosaur_isaac_sim)/urdf/sensors/realsense.isaac.xacro" />
 
     <xacro:arg name="robot_name" default="nanosaur" />
@@ -18,6 +19,13 @@
             head_type="$(arg head_type)"
             flap_type="$(arg flap_type)"
             use_nominal_extrinsics="true" />
+
+    <!-- nanosaur mecanum wheel drive controller -->
+    <xacro:mecanum_drive
+            parent="nanosaur_base"
+            wheelbase="${nanosaur_wheelbase}"
+            wheel_radius="${mecanum_radius}"
+            wheel_separation="${nanosaur_wheel_separation}" />
 
     <!-- Nanosaur sensors -->
     <xacro:if value="${cover_type_name == 'realsense'}">

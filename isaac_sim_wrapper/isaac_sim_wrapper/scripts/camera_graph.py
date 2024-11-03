@@ -40,8 +40,8 @@ class CameraGraph:
     def __init__(self,
                  node : Node, 
                  simulation_app : SimulationApp,
-                 number_camera: int,
                  robot_name: str,
+                 number_camera: int,
                  namespace: str = "",
                  camera_name: str = "camera",
                  camera_frame: str = "frame",
@@ -74,22 +74,22 @@ class CameraGraph:
     def from_yaml(cls,
                   node : Node, 
                   simulation_app: SimulationApp,
-                  number_camera: int,
                   robot_name: str,
+                  number_camera: int,
                   file_path: str):
         with open(file_path, 'r') as file:
             config_data = yaml.safe_load(file)
         # Extract the data for the class using its name as the key, defaulting to an empty dictionary
         class_data = config_data.get(cls.__name__, {})
         # Pass the required parameters along with the extracted optional data to the class constructor
-        return cls(node, simulation_app, number_camera, robot_name, **class_data)
+        return cls(node, simulation_app, robot_name, number_camera, **class_data)
 
     @classmethod
     def from_urdf(cls,
                   node : Node, 
                   simulation_app: SimulationApp,
-                  number_camera: int,
                   robot_name: str,
+                  number_camera: int,
                   urdf_sensor: str):
         # Parse the nested <camera> elements
         camera_elem = urdf_sensor.find("camera")
@@ -100,7 +100,7 @@ class CameraGraph:
         height = int(image_elem.findtext("height", 480))
         # Extract all values from urdf data
         class_data = {
-            'namespace': urdf_sensor.findtext("namespace", ""),
+            'namespace': urdf_sensor.findtext("name_space", ""),
             'camera_name': urdf_sensor.get("name", "camera"),
             'camera_frame': urdf_sensor.findtext("camera_frame", "frame"),
             'camera_optical_frame': urdf_sensor.findtext("camera_optical_frame", "optical_frame"),
@@ -108,7 +108,7 @@ class CameraGraph:
             'visible': urdf_sensor.findtext("visualize", "false").lower() == "true"
         }
         # Pass the required parameters along with the extracted optional data to the class constructor
-        return cls(node, simulation_app, number_camera, robot_name, **class_data)
+        return cls(node, simulation_app, robot_name, number_camera, **class_data)
 
     def load_camera(self):
         # Creating a Camera prim
@@ -124,7 +124,7 @@ class CameraGraph:
             camera_rgb_prim.GetVisibilityAttr().Set("invisible")
         camera_rgb_prim.GetFocalLengthAttr().Set(2.4)
         camera_rgb_prim.GetFocusDistanceAttr().Set(4)
-        # Build omnigraph
+        # Build action graph
         self._load_og()
         # Update simulation
         self._simulation_app.update()

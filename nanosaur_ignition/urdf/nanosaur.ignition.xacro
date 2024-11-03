@@ -3,8 +3,8 @@
 
     <!-- nanosaur parts -->
     <xacro:include filename="$(find nanosaur_description)/urdf/robot.urdf.xacro" />
+    <!-- Sensors & plugins -->
     <xacro:include filename="$(find nanosaur_ignition)/urdf/mecanum_drive.ignition.xacro" />
-    <!-- Sensors -->
     <xacro:include filename="$(find nanosaur_ignition)/urdf/sensors/realsense.ignition.xacro" />
 
     <xacro:arg name="robot_name" default="nanosaur" />
