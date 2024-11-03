@@ -26,54 +26,93 @@
 
 import yaml
 import omni.usd as usd
-import usdrt.Sdf
 
+from rclpy.node import Node
+from isaacsim import SimulationApp
+from omni.isaac.core.utils import stage
+from omni.isaac.core.utils.prims import set_targets
 from omni.graph.core import Controller, GraphPipelineStage
 from omni.kit.viewport.window import get_viewport_window_instances
 from pxr import Gf, UsdGeom
 
-
 class CameraGraph:
-    
+
     def __init__(self,
-                simulation_app,
-                graph_path: str,
-                number_camera: int,
-                namespace: str = "",
-                base_link: str = "base_link",
-                camera_name: str = "camera",
-                camera_frame: str = "camera_frame",
-                camera_optical_frame: str = "camera_optical_frame",
-                resolution: int[2] = [640, 480],
-                visible: bool = True):
+                 node : Node, 
+                 simulation_app : SimulationApp,
+                 number_camera: int,
+                 robot_name: str,
+                 namespace: str = "",
+                 camera_name: str = "camera",
+                 camera_frame: str = "frame",
+                 camera_optical_frame: str = "optical_frame",
+                 resolution: tuple[int, int] = [640, 480],
+                 visible: bool = True):
+        self._node = node
         self._simulation_app = simulation_app
+        self._robot_name = robot_name
         self._camera_name = camera_name
-        self._namespace = namespace
-        self._ros_camera_graph_path = f"{graph_path}/ROS_CameraGraph_{camera_name}"
-        self._camera_root_topic = f"/{namespace}/{camera_name}" if not namespace else f"/{camera_name}"
-        self._camera_frame = camera_frame
-        self._camera_optical_frame = camera_optical_frame
-        self._camera_rgb_stage_path = f"/{namespace}/{camera_optical_frame}/camera_rgb" if not namespace else f"/{camera_optical_frame}/camera_rgb"
-        self._targetPrim = f"/{namespace}/{base_link}" if not namespace else f"/{base_link}"
-        # viewport camera name
+        # status camera on Isaac Sim
+        self._visible = visible
+        # viewport camera name and resolution
         self._number_camera = number_camera
         self._viewport_name = f"Viewport{number_camera}"
         self._resolution = resolution
-        # status camera on Isaac Sim
-        self._visible = visible
+        # Path camera
+        self._camera_frame = f"{camera_name}_{camera_frame}"
+        self._camera_optical_frame = f"{camera_name}_{camera_optical_frame}"
+        self._camera_stage_path = f"/{robot_name}/{self._camera_optical_frame}/camera_rgb"
+        # If namespace is not empty add a slash
+        root_topic = f"/{namespace}" if namespace else namespace
+        self._camera_topic = f"{root_topic}/{camera_name}"
+        # Graph path
+        self._graph_path = f"/{self._robot_name}/ROS_CameraGraph_{self._camera_name}"
+        # Loading camera
+        node.get_logger().info(f"Camera name: {self._camera_name} - camera topic:{self._camera_topic} - Graph: {self._graph_path}")
 
     @classmethod
-    def from_yaml(cls, simulation_app, graph_path, number_camera, file_path: str):
+    def from_yaml(cls,
+                  node : Node, 
+                  simulation_app: SimulationApp,
+                  number_camera: int,
+                  robot_name: str,
+                  file_path: str):
         with open(file_path, 'r') as file:
             config_data = yaml.safe_load(file)
         # Extract the data for the class using its name as the key, defaulting to an empty dictionary
         class_data = config_data.get(cls.__name__, {})
         # Pass the required parameters along with the extracted optional data to the class constructor
-        return cls(simulation_app, graph_path, number_camera, **class_data)
+        return cls(node, simulation_app, number_camera, robot_name, **class_data)
+
+    @classmethod
+    def from_urdf(cls,
+                  node : Node, 
+                  simulation_app: SimulationApp,
+                  number_camera: int,
+                  robot_name: str,
+                  urdf_sensor: str):
+        # Parse the nested <camera> elements
+        camera_elem = urdf_sensor.find("camera")
+        horizontal_fov = float(camera_elem.findtext("horizontal_fov", 1.57))
+        # Parse <image> settings
+        image_elem = camera_elem.find("image")
+        width = int(image_elem.findtext("width", 640))
+        height = int(image_elem.findtext("height", 480))
+        # Extract all values from urdf data
+        class_data = {
+            'namespace': urdf_sensor.findtext("namespace", ""),
+            'camera_name': urdf_sensor.get("name", "camera"),
+            'camera_frame': urdf_sensor.findtext("camera_frame", "frame"),
+            'camera_optical_frame': urdf_sensor.findtext("camera_optical_frame", "optical_frame"),
+            'resolution': [width, height],
+            'visible': urdf_sensor.findtext("visualize", "false").lower() == "true"
+        }
+        # Pass the required parameters along with the extracted optional data to the class constructor
+        return cls(node, simulation_app, number_camera, robot_name, **class_data)
 
     def load_camera(self):
         # Creating a Camera prim
-        camera_rgb_prim = UsdGeom.Camera(usd.get_context().get_stage().DefinePrim(self._camera_rgb_stage_path, "Camera"))
+        camera_rgb_prim = UsdGeom.Camera(usd.get_context().get_stage().DefinePrim(self._camera_stage_path, "Camera"))
         xform_api = UsdGeom.XformCommonAPI(camera_rgb_prim)
         xform_api.SetTranslate(Gf.Vec3d(0.0, 0.0, 0.0))
         xform_api.SetRotate((180, 0, 0), UsdGeom.XformCommonAPI.RotationOrderXYZ)
@@ -97,7 +136,7 @@ class CameraGraph:
     def _load_og(self):
         Controller.edit(
             {
-                "graph_path": self._ros_camera_graph_path,
+                "graph_path": self._graph_path,
                 "evaluator_name": "push",
                 "pipeline_stage": GraphPipelineStage.GRAPH_PIPELINE_STAGE_SIMULATION,
             },
@@ -124,19 +163,23 @@ class CameraGraph:
                     ("getRenderProduct.outputs:renderProductPath", "cameraHelper.inputs:renderProductPath"),
                     ("getRenderProduct.outputs:renderProductPath", "cameraHelperInfo.inputs:renderProductPath"),
                     ],
-                Controller.Keys.CREATE_ATTRIBUTES: [],
                 Controller.Keys.SET_VALUES: [
                     ("createViewport.inputs:name", self._viewport_name),
                     ("createViewport.inputs:viewportId", self._number_camera),
                     ("setViewportResolution.inputs:width", self._resolution[0]),
                     ("setViewportResolution.inputs:height", self._resolution[1]),
                     ("cameraHelper.inputs:frameId", self._camera_frame),
-                    ("cameraHelper.inputs:topicName", f"{self._camera_root_topic}/rgb"),
+                    ("cameraHelper.inputs:topicName", f"{self._camera_topic}/rgb"),
                     ("cameraHelper.inputs:type", "rgb"),
                     ("cameraHelperInfo.inputs:frameId", self._camera_frame),
-                    ("cameraHelperInfo.inputs:topicName", f"{self._camera_root_topic}/camera_info"),
-                    ("setCamera.inputs:cameraPrim", [usdrt.Sdf.Path(self._targetPrim)]),
+                    ("cameraHelperInfo.inputs:topicName", f"{self._camera_topic}/camera_info"),
                 ]
             }
+        )
+
+        set_targets(
+            prim=stage.get_current_stage().GetPrimAtPath(f"{self._graph_path}/setCamera"),
+            attribute="inputs:cameraPrim",
+            target_prim_paths=[self._camera_stage_path],
         )
 # EOF

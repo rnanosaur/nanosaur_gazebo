@@ -33,9 +33,12 @@ from omni.isaac.core.utils import stage, nucleus
 from omni.isaac.core.utils.stage import is_stage_loading
 from omni.kit import commands
 from rclpy.node import Node
+import xml.etree.ElementTree as ET
 from isaac_sim_wrapper_msgs.srv import RobotSpawner
 from ament_index_python.packages import get_package_share_directory
 from std_msgs.msg import String
+from camera_graph import CameraGraph
+
 
 PACKAGE_RE = re.compile(r'package://([^/]+)/')
 BACKGROUND_STAGE_PATH = "/background"
@@ -60,6 +63,8 @@ class IsaacRobotSpawner(Node):
         self._sub_robot_description  # prevent unused variable warning
         # report if robot is loaded
         self._robot_loaded = False
+        # Default robot name
+        self._robot_name = ""
 
     def _callback_description(self, msg):
         self.get_logger().info("Loading robot")
@@ -94,11 +99,44 @@ class IsaacRobotSpawner(Node):
         self._simulation_context.step(render=True)
         while is_stage_loading():
             self._simulation_app.update()
+        # Load all controllers
+        root = ET.fromstring(robot_urdf)
+        # Find robot name
+        # Extract the content of the 'name' attribute
+        self._robot_name = root.get("name")
+        # Find all <isaacsim> elements where contain definitions of sensors and controllers
+        isaacsim_sections = root.findall("isaacsim")
+        # Print each <robot> section
+        camera_counter = 1
+        for index, isaacsim in enumerate(isaacsim_sections, start=1):
+            # Extract the reference attribute from isaacsim
+            isaacsim_reference = isaacsim.attrib.get("reference", None)
+            self.get_logger().info(f"IsaacSim reference: {isaacsim_reference}")
+            # Find the sensor tag
+            sensor_tags = isaacsim.findall("sensor")
+            # Check if the sensor tag exists and extract its type attribute and content
+            for sensor_tag in sensor_tags:
+                sensor_name = sensor_tag.attrib.get("name", None)
+                sensor_type = sensor_tag.attrib.get("type", None)
+                # Load sensors
+                if sensor_type == 'camera':
+                    camera = CameraGraph.from_urdf(self, self._simulation_app, camera_counter, self._robot_name, sensor_tag)
+                    camera.load_camera()
+                    # Increase camera counter
+                    camera_counter += 1
+                else:
+                    self.get_logger().info(f"Sensor name: {sensor_name} - type: {sensor_type}")
+                    self.get_logger().info("Sensor content:")
+                    sensor_content = ET.tostring(sensor_tag, encoding="unicode")
+                    self.get_logger().info(sensor_content)
         # Remove temporary urdf file
         if os.path.exists(temp_path_local_urdf_file):
             os.remove(temp_path_local_urdf_file)
         # Set robot_loaded to true if robot is spawned on Isaac Sim
         self._robot_loaded = True
+
+    def robot_name(self):
+        return self._robot_name
 
     def isLoaded(self):
         return self._robot_loaded
@@ -159,8 +197,9 @@ class IsaacWorld(Node):
             for idx in range(len(self._robot_spawner)):
                 if self._robot_spawner[idx].isLoaded():
                     self._robot_spawner[idx].destroy_node()
+                    robot_name = self._robot_spawner[idx].robot_name()
+                    self.get_logger().info(f"Robot {robot_name} spawner done!")
                     del self._robot_spawner[idx]
-                    self.get_logger().info("Robot spawner done! Destroy and remove!")
                     continue
                 rclpy.spin_once(self._robot_spawner[idx], timeout_sec=0.0)
             # Fix time simulation
