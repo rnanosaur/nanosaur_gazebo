@@ -28,6 +28,7 @@ from rclpy.node import Node
 from isaacsim import SimulationApp
 from omni.graph.core import Controller, GraphPipelineStage
 import xml.etree.ElementTree as ET
+import numpy as np
 import usdrt.Sdf
 
 
@@ -54,30 +55,25 @@ class PluginMecanumDrive:
         # https://github.com/Road-Balance/RB_WheeledRobotExample/blob/main/RBWheeledRobotExample_python/WheeledRobotSummitO3WheelROS2/robotnik_summit.py
         # https://www.youtube.com/watch?v=XEri32NaLYk
 
-        #wheel_radius = 0.037 / 2
-        #wheelbase = 0.1
-        #wheel_separation = 0.101
-        #wheel_offset_z = 0 #0.007
-
-        self._wheel_radius = [ wheel_radius, wheel_radius, wheel_radius, wheel_radius ]
-        self._wheel_positions = [
+        self._wheel_radius = np.array([ wheel_radius, wheel_radius, wheel_radius, wheel_radius ])
+        self._wheel_positions = np.array([
             [wheelbase / 2, wheel_separation / 2, wheel_offset_z],
             [wheelbase / 2, -wheel_separation / 2, wheel_offset_z],
             [-wheelbase / 2, wheel_separation / 2, wheel_offset_z],
             [-wheelbase / 2, -wheel_separation / 2, wheel_offset_z],
-        ]
+        ])
         # Quaternion: [0.7071068, 0, 0, 0.7071068]
         # Roll: 0deg - Pith: 0deg - Yaw: 90deg
         # Represents a 90-degree rotation about the Z-axis.
-        self._wheel_orientations = [
+        self._wheel_orientations = np.array([
             [0.7071068, 0, 0, 0.7071068],
             [0.7071068, 0, 0, 0.7071068],
             [0.7071068, 0, 0, 0.7071068],
             [0.7071068, 0, 0, 0.7071068],
-        ]
-        self._mecanum_angles = [-mecanum_angles, -mecanum_angles, -mecanum_angles, -mecanum_angles]
-        self._wheel_axis = [1, 0, 0]
-        self._up_axis = [0, 0, 1]
+        ])
+        self._mecanum_angles = np.array([-mecanum_angles, -mecanum_angles, -mecanum_angles, -mecanum_angles])
+        self._wheel_axis = np.array([1, 0, 0])
+        self._up_axis = np.array([0, 0, 1])
         # joints
         self._child_frame_id = child_frame_id
         self._front_left_joint = front_left_joint
@@ -90,6 +86,7 @@ class PluginMecanumDrive:
         # Loading camera
         node.get_logger().info(f"MecanumDrive: {self._robot_name} - Graph: {self._graph_path}")
         node.get_logger().info(f"MecanumDrive: wheelbase: {wheelbase} - wheel_separation: {wheel_separation} - wheel_radius: {wheel_radius}")
+        node.get_logger().info(f"MecanumDrive: Target Prim {self._targetPrim}")
 
     @classmethod
     def from_urdf(cls,
@@ -256,8 +253,8 @@ class PluginMecanumDrive:
                     ("jointNames.inputs:input2", self._back_left_joint),
                     ("jointNames.inputs:input3", self._back_right_joint),
 
-                    #("articulation.inputs:targetPrim", [usdrt.Sdf.Path(self._targetPrim)]),
-                    #("articulation.inputs:robotPath", self._targetPrim),
+                    ("articulation.inputs:targetPrim", [usdrt.Sdf.Path(self._targetPrim)]),
+                    ("articulation.inputs:robotPath", self._targetPrim),
                     #("articulation.inputs:usePath", False),
                 ]
             },

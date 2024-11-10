@@ -28,20 +28,24 @@ from rclpy.node import Node
 from isaacsim import SimulationApp
 from omni.isaac.core_nodes.scripts.utils import set_target_prims
 from omni.graph.core import Controller, GraphPipelineStage
+from omni.kit import commands
+from pxr import Sdf
 import xml.etree.ElementTree as ET
 
 
 def find_continuous_joint_childs(parent_link, robot_urdf):
     # Find all joints with type "continuous"
+    joints = []
     child_links = []
     for joint in robot_urdf.findall('joint'):
         if joint.get('type') == 'continuous':
-            # joint_name = joint.get('name')
+            joint_name = joint.get('name')
             if parent_link != joint.find('parent').get('link'):
                  continue
             child_link = joint.find('child').get('link')
             child_links.append(child_link)
-    return child_links
+            joints.append(joint_name)
+    return joints, child_links
 
 
 class PluginJointStatePublisher:
@@ -51,18 +55,21 @@ class PluginJointStatePublisher:
                  simulation_app : SimulationApp,
                  robot_name: str,
                  robot_urdf: str,
-                 base_link: str = "base_link"):
+                 base_link: str = "base_link",
+                 fix_joint_physic: bool = True):
         self._node = node
         self._simulation_app = simulation_app
         self._robot_name = robot_name
         self._base_link = base_link
+        self._fix_joint_physic = fix_joint_physic
         # Find all not fixed joint
-        self._continuous_joints_links = find_continuous_joint_childs(base_link, robot_urdf)
+        self._joints, self._continuous_joints_links = find_continuous_joint_childs(base_link, robot_urdf)
         # Graph path
         self._graph_path = f"/{self._robot_name}/ROS_JointStateGraph"
         # Loading camera
         node.get_logger().info(f"JointState: {self._robot_name} - Graph: {self._graph_path}")
         node.get_logger().info(f"JointState: base_link: {base_link} - Joints: {self._continuous_joints_links}")
+        node.get_logger().info(f"JointState: Fix joint physic: {self._fix_joint_physic}")
 
     @classmethod
     def from_urdf(cls,
@@ -73,12 +80,18 @@ class PluginJointStatePublisher:
                  plugin_data: str):
         # Extract all values from urdf data
         class_data = {
-            'base_link': plugin_data.findtext("base_link", "base_link")
+            'base_link': plugin_data.findtext("base_link", "base_link"),
+            'fix_joint_physic': plugin_data.findtext("fix_joint_physic", "true").lower() == "true"
         }
         # Pass the required parameters along with the extracted optional data to the class constructor
         return cls(node, simulation_app, robot_name, robot_urdf, **class_data)
 
     def load_joint_state(self):
+        # FIX Isaac Sim - Change stiffness and damping
+        if self._fix_joint_physic:
+            for joint in self._joints:
+                commands.execute('ChangeProperty', prop_path=Sdf.Path(f"/{self._robot_name}/{self._base_link}/{joint}.drive:angular:physics:damping"), value=17453.0, prev=0.0)
+                commands.execute('ChangeProperty', prop_path=Sdf.Path(f"/{self._robot_name}/{self._base_link}/{joint}.drive:angular:physics:stiffness"), value=0.0, prev=0.0)
         # Build action graph
         try:
             self._load_og()

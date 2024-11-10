@@ -162,7 +162,7 @@ class IsaacRobotSpawner(Node):
                 if plugin_name == "JointStatePublisher":
                     joint_state = PluginJointStatePublisher.from_urdf(self, self._simulation_app, self._robot_name, root, plugin)
                     joint_state.load_joint_state()
-                if plugin_name == "MecanumDrive":
+                elif plugin_name == "MecanumDrive":
                     mecanum_drive = PluginMecanumDrive.from_urdf(self, self._simulation_app, self._robot_name, plugin)
                     mecanum_drive.load_mecanum_drive()
                 else:

@@ -105,7 +105,7 @@ class CameraGraph:
             'camera_frame': urdf_sensor.findtext("camera_frame", "frame"),
             'camera_optical_frame': urdf_sensor.findtext("camera_optical_frame", "optical_frame"),
             'resolution': [width, height],
-            'visible': urdf_sensor.findtext("visualize", "false").lower() == "true"
+            'visible': urdf_sensor.findtext("visualize", "true").lower() == "true"
         }
         # Pass the required parameters along with the extracted optional data to the class constructor
         return cls(node, simulation_app, robot_name, number_camera, **class_data)
