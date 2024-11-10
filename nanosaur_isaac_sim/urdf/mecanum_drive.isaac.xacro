@@ -3,13 +3,16 @@
     xmlns:xacro="http://ros.org/wiki/xacro">
 
 
-    <xacro:macro name="mecanum_drive" params="parent wheelbase wheel_radius wheel_separation">
+    <xacro:macro name="mecanum_drive" params="parent name_space wheelbase wheel_radius wheel_separation">
         <isaacsim>
             <plugin name="JointStatePublisher">
                 <base_link>${parent}</base_link>
             </plugin>
 
             <plugin name="MecanumDrive">
+                <!-- Namespace robot -->
+                <name_space>${name_space}</name_space>
+                <!-- joints definitions -->
                 <child_frame_id>${parent}</child_frame_id>
                 <front_left_joint>front_left_mecanum_joint</front_left_joint>
                 <front_right_joint>front_right_mecanum_joint</front_right_joint>
@@ -24,6 +27,8 @@
                 <!-- Wheel radius in meters.
                 This element is optional, although it is recommended to be included with an appropriate value. The default value is 0.2m. -->
                 <wheel_radius>${wheel_radius}</wheel_radius>
+                <!-- Publish odometry -->
+                <publish_odom>false</publish_odom>
             </plugin>
         </isaacsim>
     </xacro:macro>

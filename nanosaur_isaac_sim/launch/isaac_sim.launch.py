@@ -73,7 +73,7 @@ def generate_launch_description():
     ld.add_action(nanosaur_cmd)
     ld.add_action(isaac_sim_launcher)
     ld.add_action(rsp_launcher)
-    #ld.add_action(controller_launcher)
+    ld.add_action(controller_launcher)
     
     return ld
 # EOF

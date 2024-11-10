@@ -23,6 +23,7 @@
     <!-- nanosaur mecanum wheel drive controller -->
     <xacro:mecanum_drive
             parent="nanosaur_base"
+            name_space="$(arg robot_name)"
             wheelbase="${nanosaur_wheelbase}"
             wheel_radius="${mecanum_radius}"
             wheel_separation="${nanosaur_wheel_separation}" />

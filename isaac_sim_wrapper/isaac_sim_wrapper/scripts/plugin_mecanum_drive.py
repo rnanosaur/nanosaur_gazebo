@@ -54,6 +54,7 @@ class PluginMecanumDrive:
                  max_wheel_speed: float = 1000,
                  topic_name: str = "cmd_vel",
                  publish_odom: bool = False,
+                 namespace: str = "",
                  ):
         self._node = node
         self._simulation_app = simulation_app
@@ -95,7 +96,8 @@ class PluginMecanumDrive:
         self._angular_gain = angular_gain
         self._max_wheel_speed = max_wheel_speed
         # Topic speed name
-        self._topic_name = topic_name
+        root_topic = f"/{namespace}" if namespace else namespace
+        self._topic_name = f"{root_topic}/{topic_name}"
         # Publish odometry
         self._publish_odom = publish_odom
         # Loading camera
@@ -127,6 +129,7 @@ class PluginMecanumDrive:
             'max_wheel_speed': float(plugin_data.findtext("max_wheel_speed", 1000.0)),
             'topic_name': plugin_data.findtext("topic_name", "cmd_vel"),
             'publish_odom': plugin_data.findtext("publish_odom", "false").lower() == "true",
+            'namespace': plugin_data.findtext("name_space", ""),
         }
         # Pass the required parameters along with the extracted optional data to the class constructor
         return cls(node, simulation_app, domain_id, robot_name, **class_data)
