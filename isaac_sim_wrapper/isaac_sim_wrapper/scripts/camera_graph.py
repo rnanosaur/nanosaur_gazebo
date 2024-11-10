@@ -40,6 +40,7 @@ class CameraGraph:
     def __init__(self,
                  node : Node, 
                  simulation_app : SimulationApp,
+                 domain_id: int,
                  robot_name: str,
                  number_camera: int,
                  namespace: str = "",
@@ -50,6 +51,7 @@ class CameraGraph:
                  visible: bool = True):
         self._node = node
         self._simulation_app = simulation_app
+        self._domain_id = domain_id
         self._robot_name = robot_name
         self._camera_name = camera_name
         # status camera on Isaac Sim
@@ -74,6 +76,7 @@ class CameraGraph:
     def from_yaml(cls,
                   node : Node, 
                   simulation_app: SimulationApp,
+                  domain_id: int,
                   robot_name: str,
                   number_camera: int,
                   file_path: str):
@@ -82,12 +85,13 @@ class CameraGraph:
         # Extract the data for the class using its name as the key, defaulting to an empty dictionary
         class_data = config_data.get(cls.__name__, {})
         # Pass the required parameters along with the extracted optional data to the class constructor
-        return cls(node, simulation_app, robot_name, number_camera, **class_data)
+        return cls(node, simulation_app, domain_id, robot_name, number_camera, **class_data)
 
     @classmethod
     def from_urdf(cls,
                   node : Node, 
                   simulation_app: SimulationApp,
+                  domain_id: int,
                   robot_name: str,
                   number_camera: int,
                   urdf_sensor: str):
@@ -108,7 +112,7 @@ class CameraGraph:
             'visible': urdf_sensor.findtext("visualize", "true").lower() == "true"
         }
         # Pass the required parameters along with the extracted optional data to the class constructor
-        return cls(node, simulation_app, robot_name, number_camera, **class_data)
+        return cls(node, simulation_app, domain_id, robot_name, number_camera, **class_data)
 
     def load_camera(self):
         # Creating a Camera prim

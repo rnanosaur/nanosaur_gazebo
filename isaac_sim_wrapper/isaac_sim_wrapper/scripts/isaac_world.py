@@ -78,7 +78,7 @@ class IsaacWorldError(Exception):
 
 class IsaacRobotSpawner(Node):
     
-    def __init__(self, simulation_app: SimulationApp, simulation_context: SimulationContext, topic_description: str):
+    def __init__(self, simulation_app: SimulationApp, simulation_context: SimulationContext, domain_id: int, topic_description: str):
         super().__init__('isaac_robot_spawner')
         self._simulation_app = simulation_app
         self._simulation_context = simulation_context
@@ -88,6 +88,8 @@ class IsaacRobotSpawner(Node):
         self._sub_robot_description  # prevent unused variable warning
         # report if robot is loaded
         self._robot_loaded = False
+        # Default domain id for this simulation
+        self._domain_id = domain_id
         # Default robot name
         self._robot_name = ""
 
@@ -145,7 +147,7 @@ class IsaacRobotSpawner(Node):
                 sensor_type = sensor_tag.attrib.get("type", None)
                 # Load sensors
                 if sensor_type == 'camera':
-                    camera = CameraGraph.from_urdf(self, self._simulation_app, self._robot_name, camera_counter, sensor_tag)
+                    camera = CameraGraph.from_urdf(self, self._simulation_app, self._domain_id, self._robot_name, camera_counter, sensor_tag)
                     camera.load_camera()
                     # Increase camera counter
                     camera_counter += 1
@@ -160,10 +162,10 @@ class IsaacRobotSpawner(Node):
                 plugin_name = plugin.attrib.get("name", None)
                 # Load all plugins
                 if plugin_name == "JointStatePublisher":
-                    joint_state = PluginJointStatePublisher.from_urdf(self, self._simulation_app, self._robot_name, root, plugin)
+                    joint_state = PluginJointStatePublisher.from_urdf(self, self._simulation_app, self._domain_id, self._robot_name, root, plugin)
                     joint_state.load_joint_state()
                 elif plugin_name == "MecanumDrive":
-                    mecanum_drive = PluginMecanumDrive.from_urdf(self, self._simulation_app, self._robot_name, plugin)
+                    mecanum_drive = PluginMecanumDrive.from_urdf(self, self._simulation_app, self._domain_id, self._robot_name, plugin)
                     mecanum_drive.load_mecanum_drive()
                 else:
                     self.get_logger().info(f"Plugin: {plugin_name}")
@@ -185,6 +187,8 @@ class IsaacWorld(Node):
     def __init__(self, simulation_app: SimulationApp, stage_path: str = ""):
         super().__init__('isaac_world')
         self._simulation_app = simulation_app
+        # Default domain id for this simulation
+        self._domain_id = 0
         # List of all robot spawner
         self._robot_spawner = []
         # Setting up scene
@@ -254,7 +258,7 @@ class IsaacWorld(Node):
         self.get_logger().info("Request status Isaac Sim")
         robot_description = request.robot_description
         # Add a robot spawner in list
-        self._robot_spawner += [IsaacRobotSpawner(self._simulation_app, self._simulation_context, robot_description)]
+        self._robot_spawner += [IsaacRobotSpawner(self._simulation_app, self._simulation_context, self._domain_id, robot_description)]
         return response
 
 

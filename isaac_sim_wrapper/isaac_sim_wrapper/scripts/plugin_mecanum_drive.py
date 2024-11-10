@@ -37,6 +37,7 @@ class PluginMecanumDrive:
     def __init__(self,
                  node : Node, 
                  simulation_app : SimulationApp,
+                 domain_id: int,
                  robot_name: str,
                  child_frame_id: str = "child_frame_id",
                  front_left_joint: str = "front_left_joint",
@@ -48,9 +49,14 @@ class PluginMecanumDrive:
                  wheel_radius: float = 1.0,
                  wheel_offset_z: float = 0.0,
                  mecanum_angles: float = 45.0,
+                 linear_gain: float = 1.0,
+                 angular_gain: float = 1.0,
+                 max_wheel_speed: float = 1000,
+                 topic_name: str = "cmd_vel"
                  ):
         self._node = node
         self._simulation_app = simulation_app
+        self._domain_id = domain_id
         self._robot_name = robot_name
         # https://github.com/Road-Balance/RB_WheeledRobotExample/blob/main/RBWheeledRobotExample_python/WheeledRobotSummitO3WheelROS2/robotnik_summit.py
         # https://www.youtube.com/watch?v=XEri32NaLYk
@@ -83,6 +89,12 @@ class PluginMecanumDrive:
         # Graph path
         self._graph_path = f"/{self._robot_name}/ROS_MecanumDriveGraph"
         self._targetPrim = f"/{self._robot_name}/{self._child_frame_id}"
+        # Control values
+        self._linear_gain = linear_gain
+        self._angular_gain = angular_gain
+        self._max_wheel_speed = max_wheel_speed
+        # Topic speed name
+        self._topic_name = topic_name
         # Loading camera
         node.get_logger().info(f"MecanumDrive: {self._robot_name} - Graph: {self._graph_path}")
         node.get_logger().info(f"MecanumDrive: wheelbase: {wheelbase} - wheel_separation: {wheel_separation} - wheel_radius: {wheel_radius}")
@@ -92,6 +104,7 @@ class PluginMecanumDrive:
     def from_urdf(cls,
                  node : Node, 
                  simulation_app : SimulationApp,
+                 domain_id: int,
                  robot_name: str,
                  plugin_data: str):
         # Extract all values from urdf data
@@ -106,9 +119,13 @@ class PluginMecanumDrive:
             'wheel_radius': float(plugin_data.findtext("wheel_radius", 1.0)),
             'wheel_offset_z': float(plugin_data.findtext("wheel_offset_z", 0.0)),
             'mecanum_angles': float(plugin_data.findtext("mecanum_angles", 45.0)),
+            'linear_gain': float(plugin_data.findtext("linear_gain", 1.0)),
+            'angular_gain': float(plugin_data.findtext("angular_gain", 1.0)),
+            'max_wheel_speed': float(plugin_data.findtext("max_wheel_speed", 1000.0)),
+            'topic_name': plugin_data.findtext("topic_name", "cmd_vel"),
         }
         # Pass the required parameters along with the extracted optional data to the class constructor
-        return cls(node, simulation_app, robot_name, **class_data)
+        return cls(node, simulation_app, domain_id, robot_name, **class_data)
 
     def load_mecanum_drive(self):
         # Build action graph
@@ -118,7 +135,6 @@ class PluginMecanumDrive:
             self._node.get_logger().error(e)
         # Update simulation
         self._simulation_app.update()
-
 
     def _load_og(self):
         Controller.edit(
@@ -204,10 +220,9 @@ class PluginMecanumDrive:
                     ("jointNames.inputs:input3", "token"),
                 ],
                 Controller.Keys.SET_VALUES: [
-                    # Assigning a Domain ID of 1 to Context node
-                    ("context.inputs:domain_id", 0),
+                    ("context.inputs:domain_id", self._domain_id),
                     # Assigning topic name to clock publisher
-                    ("subscribeTwist.inputs:topicName", "cmd_vel"),
+                    ("subscribeTwist.inputs:topicName", self._topic_name),
                     ("angvelGain.inputs:value", 1.0),
                     ("linXGain.inputs:value", 1.0),
                     ("linYGain.inputs:value", 1.0),
@@ -218,9 +233,9 @@ class PluginMecanumDrive:
                     ("mecanumAng.inputs:input1", self._mecanum_angles[1]),
                     ("mecanumAng.inputs:input2", self._mecanum_angles[2]),
                     ("mecanumAng.inputs:input3", self._mecanum_angles[3]),
-                    ("holonomicCtrl.inputs:angularGain", 1.0),
-                    ("holonomicCtrl.inputs:linearGain", 1.0),
-                    ("holonomicCtrl.inputs:maxWheelSpeed", 1200.0),
+                    ("holonomicCtrl.inputs:angularGain", self._angular_gain),
+                    ("holonomicCtrl.inputs:linearGain", self._linear_gain),
+                    ("holonomicCtrl.inputs:maxWheelSpeed", self._max_wheel_speed),
 
                     ("upAxis.inputs:value", self._up_axis),
                     ("wheelAxis.inputs:value", self._wheel_axis),

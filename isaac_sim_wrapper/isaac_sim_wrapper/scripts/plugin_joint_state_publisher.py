@@ -53,12 +53,14 @@ class PluginJointStatePublisher:
     def __init__(self,
                  node : Node, 
                  simulation_app : SimulationApp,
+                 domain_id: int,
                  robot_name: str,
                  robot_urdf: str,
                  base_link: str = "base_link",
                  fix_joint_physic: bool = True):
         self._node = node
         self._simulation_app = simulation_app
+        self._domain_id = domain_id
         self._robot_name = robot_name
         self._base_link = base_link
         self._fix_joint_physic = fix_joint_physic
@@ -75,6 +77,7 @@ class PluginJointStatePublisher:
     def from_urdf(cls,
                  node : Node, 
                  simulation_app : SimulationApp,
+                 domain_id: int,
                  robot_name: str,
                  robot_urdf: str,
                  plugin_data: str):
@@ -84,7 +87,7 @@ class PluginJointStatePublisher:
             'fix_joint_physic': plugin_data.findtext("fix_joint_physic", "true").lower() == "true"
         }
         # Pass the required parameters along with the extracted optional data to the class constructor
-        return cls(node, simulation_app, robot_name, robot_urdf, **class_data)
+        return cls(node, simulation_app, domain_id, robot_name, robot_urdf, **class_data)
 
     def load_joint_state(self):
         # FIX Isaac Sim - Change stiffness and damping
@@ -120,8 +123,7 @@ class PluginJointStatePublisher:
                     ("IsaacReadSimulationTime.outputs:simulationTime", "ROS2PublishTransformTree.inputs:timeStamp"),
                     ],
                 Controller.Keys.SET_VALUES: [
-                    # Assigning a Domain ID of 1 to Context node
-                    ("ROS2Context.inputs:domain_id", 0),
+                    ("ROS2Context.inputs:domain_id", self._domain_id),
                     ],
             }
         )
