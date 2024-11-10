@@ -52,7 +52,8 @@ class PluginMecanumDrive:
                  linear_gain: float = 1.0,
                  angular_gain: float = 1.0,
                  max_wheel_speed: float = 1000,
-                 topic_name: str = "cmd_vel"
+                 topic_name: str = "cmd_vel",
+                 publish_odom: bool = False,
                  ):
         self._node = node
         self._simulation_app = simulation_app
@@ -95,6 +96,8 @@ class PluginMecanumDrive:
         self._max_wheel_speed = max_wheel_speed
         # Topic speed name
         self._topic_name = topic_name
+        # Publish odometry
+        self._publish_odom = publish_odom
         # Loading camera
         node.get_logger().info(f"MecanumDrive: {self._robot_name} - Graph: {self._graph_path}")
         node.get_logger().info(f"MecanumDrive: wheelbase: {wheelbase} - wheel_separation: {wheel_separation} - wheel_radius: {wheel_radius}")
@@ -123,6 +126,7 @@ class PluginMecanumDrive:
             'angular_gain': float(plugin_data.findtext("angular_gain", 1.0)),
             'max_wheel_speed': float(plugin_data.findtext("max_wheel_speed", 1000.0)),
             'topic_name': plugin_data.findtext("topic_name", "cmd_vel"),
+            'publish_odom': plugin_data.findtext("publish_odom", "false").lower() == "true",
         }
         # Pass the required parameters along with the extracted optional data to the class constructor
         return cls(node, simulation_app, domain_id, robot_name, **class_data)
@@ -131,6 +135,9 @@ class PluginMecanumDrive:
         # Build action graph
         try:
             self._load_og()
+            # Publish odometry
+            if self._publish_odom:
+                self._load_og_odom()
         except Exception as e:
             self._node.get_logger().error(e)
         # Update simulation
@@ -272,6 +279,42 @@ class PluginMecanumDrive:
                     ("articulation.inputs:robotPath", self._targetPrim),
                     #("articulation.inputs:usePath", False),
                 ]
+            },
+        )
+        
+    def _load_og_odom(self):
+        Controller.edit(
+            {
+                "graph_path": f"{self._graph_path}_odom",
+                "evaluator_name": "execution"},
+            {
+                Controller.Keys.CREATE_NODES: [
+                    ("onPlaybackTick", "omni.graph.action.OnPlaybackTick"),
+                    ("context", "omni.isaac.ros2_bridge.ROS2Context"),
+                    ("readSimTime", "omni.isaac.core_nodes.IsaacReadSimulationTime"),
+                    ("computeOdom", "omni.isaac.core_nodes.IsaacComputeOdometry"),
+                    ("publishOdom", "omni.isaac.ros2_bridge.ROS2PublishOdometry"),
+                    ("publishRawTF", "omni.isaac.ros2_bridge.ROS2PublishRawTransformTree"),
+                ],
+                Controller.Keys.SET_VALUES: [
+                    ("context.inputs:domain_id", self._domain_id),
+                    ("computeOdom.inputs:chassisPrim", [usdrt.Sdf.Path(self._targetPrim)]),
+                ],
+                Controller.Keys.CONNECT: [
+                    ("onPlaybackTick.outputs:tick", "computeOdom.inputs:execIn"),
+                    ("onPlaybackTick.outputs:tick", "publishOdom.inputs:execIn"),
+                    ("onPlaybackTick.outputs:tick", "publishRawTF.inputs:execIn"),
+                    ("readSimTime.outputs:simulationTime", "publishOdom.inputs:timeStamp"),
+                    ("readSimTime.outputs:simulationTime", "publishRawTF.inputs:timeStamp"),
+                    ("context.outputs:context", "publishOdom.inputs:context"),
+                    ("context.outputs:context", "publishRawTF.inputs:context"),
+                    ("computeOdom.outputs:angularVelocity", "publishOdom.inputs:angularVelocity"),
+                    ("computeOdom.outputs:linearVelocity", "publishOdom.inputs:linearVelocity"),
+                    ("computeOdom.outputs:orientation", "publishOdom.inputs:orientation"),
+                    ("computeOdom.outputs:position", "publishOdom.inputs:position"),
+                    ("computeOdom.outputs:orientation", "publishRawTF.inputs:rotation"),
+                    ("computeOdom.outputs:position", "publishRawTF.inputs:translation"),
+                ],
             },
         )
 # EOF
