@@ -70,7 +70,7 @@ def launch_setup(context: LaunchContext, support_package):
 
 
 def generate_launch_description():
-    package_ignition = get_package_share_directory('nanosaur_gazebo')
+    package_gazebo = get_package_share_directory('nanosaur_gazebo')
     namespace = LaunchConfiguration('namespace')
 
     use_sim_time_cmd = DeclareLaunchArgument(
@@ -96,7 +96,7 @@ def generate_launch_description():
     # full  path to urdf and world file
     # world = os.path.join(nanosaur_simulations, "worlds", world_file_name)
     default_xacro_path = os.path.join(
-        package_ignition, "urdf", "nanosaur.ignition.xacro")
+        package_gazebo, "urdf", "nanosaur.gazebo.xacro")
 
     declare_model_path_cmd = DeclareLaunchArgument(
         name='xacro_path',

@@ -4,8 +4,8 @@
     <!-- nanosaur parts -->
     <xacro:include filename="$(find nanosaur_description)/urdf/robot.urdf.xacro" />
     <!-- Sensors & plugins -->
-    <xacro:include filename="$(find nanosaur_gazebo)/urdf/mecanum_drive.ignition.xacro" />
-    <xacro:include filename="$(find nanosaur_gazebo)/urdf/sensors/realsense.ignition.xacro" />
+    <xacro:include filename="$(find nanosaur_gazebo)/urdf/mecanum_drive.gazebo.xacro" />
+    <xacro:include filename="$(find nanosaur_gazebo)/urdf/sensors/realsense.gazebo.xacro" />
 
     <xacro:arg name="robot_name" default="nanosaur" />
     <!-- camera definitions -->

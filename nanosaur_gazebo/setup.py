@@ -52,7 +52,7 @@ setup(
     zip_safe=True,
     maintainer='Raffaello Bonghi',
     maintainer_email='raffaello@rnext.it',
-    description='Run nanosaur on ignition simulator',
+    description='Run nanosaur on gazebo simulator',
     license='MIT',
     tests_require=['pytest'],
     entry_points={

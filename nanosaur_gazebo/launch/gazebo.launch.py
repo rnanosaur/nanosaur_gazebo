@@ -81,23 +81,23 @@ def load_robot_position(config, world_file_name):
     return Coordinate(config)
 
 
-def launch_ignition_setup(context: LaunchContext, support_namespace, support_world):
+def launch_gazebo_setup(context: LaunchContext, support_namespace, support_world):
     """ Reference:
         https://answers.ros.org/question/396345/ros2-launch-file-how-to-convert-launchargument-to-string/ 
         https://github.com/UniversalRobots/Universal_Robots_ROS2_Driver/blob/main/ur_moveit_config/launch/ur_moveit.launch.py
     """
-    package_ignition = get_package_share_directory('nanosaur_gazebo')
+    package_gazebo = get_package_share_directory('nanosaur_gazebo')
     package_worlds = get_package_share_directory('nanosaur_worlds')
     # render namespace, dumping the support_package.
     namespace = context.perform_substitution(support_namespace)
     world_name = context.perform_substitution(support_world) + '.sdf'
     print(f"Loading world: {world_name}")
-    gui_config = os.path.join(package_ignition, "gui", "gui.config")
+    gui_config = os.path.join(package_gazebo, "gui", "gui.config")
     basic_world = os.path.join(package_worlds, "worlds", world_name)
     
     # Load configuration from params
     conf = load_robot_position(os.path.join(package_worlds, 'params', 'spawn_robot.yml'), world_name)
-    ignition_spawn_entity = Node(
+    gazebo_spawn_entity = Node(
         package='ros_gz_sim',
         executable='create',
         output='screen',
@@ -117,11 +117,11 @@ def launch_ignition_setup(context: LaunchContext, support_namespace, support_wor
                                         + ' --gui-config ' + gui_config
                                         ])])
     
-    return [ignition_spawn_entity, ign_gazebo]
+    return [gazebo_spawn_entity, ign_gazebo]
     
 
 def generate_launch_description():
-    package_ignition = get_package_share_directory('nanosaur_gazebo')
+    package_gazebo = get_package_share_directory('nanosaur_gazebo')
 
     default_world_name = 'lab' # Empty world: empty
 
@@ -129,9 +129,9 @@ def generate_launch_description():
     namespace = LaunchConfiguration('namespace', default="nanosaur")
     world_name = LaunchConfiguration('world_name', default=default_world_name)
     
-    launch_file_dir = os.path.join(package_ignition, 'launch')
+    launch_file_dir = os.path.join(package_gazebo, 'launch')
 
-    # Set ignition resource path
+    # Set gazebo resource path
     ign_resource_path = SetEnvironmentVariable(
         name='IGN_GAZEBO_RESOURCE_PATH', value=[
             os.path.join(get_package_prefix('nanosaur_description'), "share"),
@@ -170,7 +170,7 @@ def generate_launch_description():
     ld.add_action(use_sim_time_cmd)
     ld.add_action(nanosaur_cmd)
     ld.add_action(world_name_cmd)
-    ld.add_action(OpaqueFunction(function=launch_ignition_setup, args=[namespace, world_name]))
+    ld.add_action(OpaqueFunction(function=launch_gazebo_setup, args=[namespace, world_name]))
     ld.add_action(rsp_launcher)
     ld.add_action(ros_gz_bridge)
 
