@@ -70,7 +70,7 @@ def launch_setup(context: LaunchContext, support_package):
 
 
 def generate_launch_description():
-    package_ignition = get_package_share_directory('nanosaur_ignition')
+    package_ignition = get_package_share_directory('nanosaur_gazebo')
     namespace = LaunchConfiguration('namespace')
 
     use_sim_time_cmd = DeclareLaunchArgument(

@@ -86,7 +86,7 @@ def launch_ignition_setup(context: LaunchContext, support_namespace, support_wor
         https://answers.ros.org/question/396345/ros2-launch-file-how-to-convert-launchargument-to-string/ 
         https://github.com/UniversalRobots/Universal_Robots_ROS2_Driver/blob/main/ur_moveit_config/launch/ur_moveit.launch.py
     """
-    package_ignition = get_package_share_directory('nanosaur_ignition')
+    package_ignition = get_package_share_directory('nanosaur_gazebo')
     package_worlds = get_package_share_directory('nanosaur_worlds')
     # render namespace, dumping the support_package.
     namespace = context.perform_substitution(support_namespace)
@@ -121,7 +121,7 @@ def launch_ignition_setup(context: LaunchContext, support_namespace, support_wor
     
 
 def generate_launch_description():
-    package_ignition = get_package_share_directory('nanosaur_ignition')
+    package_ignition = get_package_share_directory('nanosaur_gazebo')
 
     default_world_name = 'lab' # Empty world: empty
 

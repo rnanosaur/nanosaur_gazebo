@@ -28,7 +28,7 @@ from setuptools import find_packages, setup
 from os import path
 from glob import glob
 
-package_name = 'nanosaur_ignition'
+package_name = 'nanosaur_gazebo'
 
 here = path.abspath(path.dirname(__file__))
 with open(path.join(here, 'requirements.txt'), encoding='utf-8') as f:
@@ -57,7 +57,7 @@ setup(
     tests_require=['pytest'],
     entry_points={
         'console_scripts': [
-            'cmd_republisher = nanosaur_ignition.republisher:main',
+            'cmd_republisher = nanosaur_gazebo.republisher:main',
         ],
     },
 )
