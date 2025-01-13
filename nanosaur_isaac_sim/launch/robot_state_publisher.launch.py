@@ -110,7 +110,7 @@ def generate_launch_description():
         namespace=namespace,
         executable='isaac_sim_manager',
         parameters=[
-            {'robot_description': 'nanosaur/robot_description'}
+            {'robot_description': 'robot_description'}
         ]
     )
     

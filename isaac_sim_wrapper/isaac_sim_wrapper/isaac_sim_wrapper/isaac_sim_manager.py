@@ -34,18 +34,20 @@ class IsaacSimMananger(Node):
     def __init__(self):
         super().__init__('isaac_sim_manager')
         self.cli = self.create_client(RobotSpawner, '/isaac_sim_status')
+        namespace = self.get_namespace()
         # Get interval parameter, default 2.0
         self.declare_parameter('timeout_sec', 2.0)
         timeout_sec = self.get_parameter('timeout_sec')._value
         self.get_logger().info(f"Isaac Sim manager started, check every {timeout_sec}s")
         self.declare_parameter('robot_description', 'robot_description')
         robot_description = self.get_parameter('robot_description')._value
-        self.get_logger().info(f"Topic robot description: {robot_description}")
+        robot_description_topic = f"{namespace}/{robot_description}"
+        self.get_logger().info(f"Topic robot description: {robot_description_topic}")
         # Wait until Isaac Sim service starter
         while not self.cli.wait_for_service(timeout_sec=timeout_sec):
             self.get_logger().debug("Isaac Sim not yet started, waiting again...")
         self.req = RobotSpawner.Request()
-        self.req.robot_description = robot_description
+        self.req.robot_description = robot_description_topic
     
     def send_request(self):
         return self.cli.call_async(self.req)

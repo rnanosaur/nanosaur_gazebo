@@ -59,13 +59,13 @@ def generate_launch_description():
     rsp_launcher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [launch_file_dir, '/robot_state_publisher.launch.py']),
-        launch_arguments={'use_sim_time': use_sim_time}.items(),
+        launch_arguments={'use_sim_time': use_sim_time, 'namespace': namespace}.items(),
     )
     
     controller_launcher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
             [launch_file_dir, '/controller.launch.py']),
-        launch_arguments={'use_sim_time': use_sim_time}.items(),
+        launch_arguments={'use_sim_time': use_sim_time, 'namespace': namespace}.items(),
     )
 
     ld = LaunchDescription()
