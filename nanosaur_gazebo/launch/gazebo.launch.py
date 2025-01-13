@@ -90,11 +90,11 @@ def launch_gazebo_setup(context: LaunchContext, support_namespace, support_world
     package_worlds = get_package_share_directory('nanosaur_worlds')
     # render namespace, dumping the support_package.
     namespace = context.perform_substitution(support_namespace)
-    world_name = context.perform_substitution(support_world) + '.sdf'
+    world_name = f'{context.perform_substitution(support_world)}.sdf'
     print(f"Loading world: {world_name}")
     gui_config = os.path.join(package_gazebo, "gui", "gui.config")
     basic_world = os.path.join(package_worlds, "worlds", world_name)
-    
+
     # Load configuration from params
     conf = load_robot_position(os.path.join(package_worlds, 'params', 'spawn_robot.yml'), world_name)
     gazebo_spawn_entity = Node(
@@ -103,20 +103,28 @@ def launch_gazebo_setup(context: LaunchContext, support_namespace, support_world
         output='screen',
         namespace=namespace,
         arguments=['-topic', 'robot_description',
-                   '-name', 'nanosaur',
+                   '-name', namespace,
                    '-allow_renaming', 'true',
                    '-x', conf.x, '-y', conf.y, '-z',conf.z,
                    '-R', conf.R, '-P', conf.P, '-Y',conf.Y,
                    ],
     )
-    
+
     ign_gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource([os.path.join(get_package_share_directory('ros_gz_sim'),
-                                                    'launch', 'gz_sim.launch.py')]),
-        launch_arguments=[('gz_args', [' -r -v 3 ' + basic_world + ' '
-                                        + ' --gui-config ' + gui_config
-                                        ])])
-    
+        PythonLaunchDescriptionSource(
+            [
+                os.path.join(
+                    get_package_share_directory('ros_gz_sim'),
+                    'launch',
+                    'gz_sim.launch.py',
+                )
+            ]
+        ),
+        launch_arguments=[
+            ('gz_args', [f' -r -v 3 {basic_world}  --gui-config {gui_config}'])
+        ],
+    )
+
     return [gazebo_spawn_entity, ign_gazebo]
     
 
