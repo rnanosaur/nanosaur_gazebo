@@ -1,4 +1,4 @@
-# Copyright (C) 2024, Raffaello Bonghi <raffaello@rnext.it>
+# Copyright (C) 2025, Raffaello Bonghi <raffaello@rnext.it>
 # All rights reserved
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions are met:
@@ -81,48 +81,44 @@ def load_robot_position(config, world_file_name):
     return Coordinate(config)
 
 
-def launch_gazebo_setup(context: LaunchContext, support_world):
+def launch_gazebo_setup(context: LaunchContext, support_namespace, support_world):
     """ Reference:
         https://answers.ros.org/question/396345/ros2-launch-file-how-to-convert-launchargument-to-string/ 
         https://github.com/UniversalRobots/Universal_Robots_ROS2_Driver/blob/main/ur_moveit_config/launch/ur_moveit.launch.py
     """
-    package_gazebo = get_package_share_directory('nanosaur_gazebo')
     package_worlds = get_package_share_directory('nanosaur_worlds')
     # render namespace, dumping the support_package.
+    namespace = context.perform_substitution(support_namespace)
     world_name = f'{context.perform_substitution(support_world)}.sdf'
-    print(f"Loading world: {world_name}")
-    gui_config = os.path.join(package_gazebo, "gui", "gui.config")
-    basic_world = os.path.join(package_worlds, "worlds", world_name)
 
-    ign_gazebo = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [
-                os.path.join(
-                    get_package_share_directory('ros_gz_sim'),
-                    'launch',
-                    'gz_sim.launch.py',
-                )
-            ]
-        ),
-        launch_arguments=[
-            ('gz_args', [f' -r -v 3 {basic_world}  --gui-config {gui_config}'])
-        ],
+    # Load configuration from params
+    conf = load_robot_position(os.path.join(package_worlds, 'params', 'spawn_robot.yml'), world_name)
+    gazebo_spawn_entity = Node(
+        package='ros_gz_sim',
+        executable='create',
+        output='screen',
+        namespace=namespace,
+        arguments=['-topic', 'robot_description',
+                   '-name', namespace,
+                   '-allow_renaming', 'true',
+                   '-x', conf.x, '-y', conf.y, '-z',conf.z,
+                   '-R', conf.R, '-P', conf.P, '-Y',conf.Y,
+                   ],
     )
 
-    return [ign_gazebo]
+    return [gazebo_spawn_entity]
     
 
 def generate_launch_description():
+    package_gazebo = get_package_share_directory('nanosaur_gazebo')
+
     default_world_name = 'lab' # Empty world: empty
 
+    use_sim_time = LaunchConfiguration('use_sim_time', default='true')
+    namespace = LaunchConfiguration('namespace', default="nanosaur")
     world_name = LaunchConfiguration('world_name', default=default_world_name)
-
-    # Set gazebo resource path
-    ign_resource_path = SetEnvironmentVariable(
-        name='IGN_GAZEBO_RESOURCE_PATH', value=[
-            os.path.join(get_package_prefix('nanosaur_description'), "share"),
-            ":" +
-            os.path.join(get_package_share_directory('nanosaur_worlds'), "models")])
+    
+    launch_file_dir = os.path.join(package_gazebo, 'launch')
 
     use_sim_time_cmd = DeclareLaunchArgument(
         name='use_sim_time',
@@ -139,12 +135,25 @@ def generate_launch_description():
         default_value=default_world_name,
         description='Simulation world name.')
 
+    rsp_launcher = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [launch_file_dir, '/robot_state_publisher.launch.py']),
+        launch_arguments={'use_sim_time': use_sim_time}.items(),
+    )
+
+    ros_gz_bridge = IncludeLaunchDescription(
+        PythonLaunchDescriptionSource(
+            [launch_file_dir, '/ros_gz_bridge.launch.py']),
+        launch_arguments={'use_sim_time': use_sim_time, 'world_name': world_name}.items(),
+    )
+
     ld = LaunchDescription()
-    ld.add_action(ign_resource_path)
     ld.add_action(use_sim_time_cmd)
     ld.add_action(nanosaur_cmd)
     ld.add_action(world_name_cmd)
-    ld.add_action(OpaqueFunction(function=launch_gazebo_setup, args=[world_name]))
+    ld.add_action(OpaqueFunction(function=launch_gazebo_setup, args=[namespace, world_name]))
+    ld.add_action(rsp_launcher)
+    ld.add_action(ros_gz_bridge)
 
     return ld
 # EOF

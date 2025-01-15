@@ -55,16 +55,10 @@ def generate_launch_description():
         PythonLaunchDescriptionSource(
             [os.path.join(package_isaac_sim, 'launch'), '/isaac_sim_server.launch.py']),
     )
-
-    rsp_launcher = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            [launch_file_dir, '/robot_state_publisher.launch.py']),
-        launch_arguments={'use_sim_time': use_sim_time, 'namespace': namespace}.items(),
-    )
     
-    controller_launcher = IncludeLaunchDescription(
+    nanosaur_bridge_launcher = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            [launch_file_dir, '/controller.launch.py']),
+            [launch_file_dir, '/nanosaur_bridge.launch.py']),
         launch_arguments={'use_sim_time': use_sim_time, 'namespace': namespace}.items(),
     )
 
@@ -72,8 +66,7 @@ def generate_launch_description():
     ld.add_action(use_sim_time_cmd)
     ld.add_action(nanosaur_cmd)
     ld.add_action(isaac_sim_launcher)
-    ld.add_action(rsp_launcher)
-    ld.add_action(controller_launcher)
+    ld.add_action(nanosaur_bridge_launcher)
     
     return ld
 # EOF
