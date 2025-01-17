@@ -1,0 +1,17 @@
+
+services:
+  nanosaur_simulator:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: nanosaur-simulator
+    environment:
+      - ROS_DOMAIN_ID=${ROS_DOMAIN_ID:-0}
+      - USER=${USER}
+      - HOST_USER_UID=${USER_UID}
+      - HOST_USER_GID=${USER_GID}
+      - SIMULATOR_PACKAGE=isaac_sim
+    network_mode: host
+    ipc: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
