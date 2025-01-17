@@ -1,0 +1,31 @@
+name: ROS 2 CI
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up ROS 2
+      uses: ros-tooling/setup-ros@v0.2.1
+      with:
+        version: humble
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        rosdep update
+        rosdep install --from-paths src --ignore-src -r -y
+
+    - name: Build the workspace
+      run: |
+        colcon build
+
+    - name: Run tests
+      run: |
+        colcon test
+        colcon test-result --verbose
