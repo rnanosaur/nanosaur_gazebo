@@ -10,7 +10,7 @@ services:
       - USER=${USER}
       - HOST_USER_UID=${USER_UID}
       - HOST_USER_GID=${USER_GID}
-      - SIMULATOR_PACKAGE=isaac_sim
+      - SIMULATOR_PACKAGE=${SIMULATION}
     network_mode: host
     ipc: host
     volumes:

@@ -51,7 +51,6 @@ if [ -n "$HOST_USER_UID" ] && [ -n "$HOST_USER_GID" ]; then
         exec gosu ${USER} "$@"
     fi
 fi
-fi
 
 # Execute command as root if HOST_USER_UID and HOST_USER_GID are not set
 echo "Running as root user since HOST_USER_UID and HOST_USER_GID are not set"
