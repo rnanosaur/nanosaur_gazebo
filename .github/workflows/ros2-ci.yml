@@ -11,7 +11,7 @@ jobs:
       uses: actions/checkout@v2
 
     - name: Set up ROS 2
-      uses: ros-tooling/setup-ros@v0.2.1
+      uses: ros-tooling/setup-ros@v0.7
       with:
         version: humble
 
