@@ -10,22 +10,10 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v2
 
-    - name: Set up ROS 2
-      uses: ros-tooling/setup-ros@v0.7
+    - uses: ros-tooling/setup-ros@v0.7
       with:
-        version: humble
-
-    - name: Install dependencies
-      run: |
-        sudo apt-get update
-        rosdep update
-        rosdep install --from-paths src --ignore-src -r -y
-
-    - name: Build the workspace
-      run: |
-        colcon build
-
-    - name: Run tests
-      run: |
-        colcon test
-        colcon test-result --verbose
+        required-ros-distributions: humble
+    - uses: ros-tooling/action-ros-ci@v0.3
+      with:
+        package-name: nanosaur_gazebo
+        target-ros2-distro: humble
